@@ -1,41 +1,54 @@
 package com.silva.upload;
 
-import feign.Feign;
-import feign.Request;
-import feign.form.spring.SpringFormEncoder;
+import org.apache.commons.fileupload.disk.DiskFileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @RestController
 public class UploadController {
-
-    public UploadController(UploadClient client) {
-        this.client = client;
-    }
-
+    @Autowired
     private UploadClient client;
+
+//    @PostMapping(value = "/upload-file")
+//    public String handleFileUpload(@RequestPart(value = "file") MultipartFile file) {
+//        return file.getOriginalFilename();
+//    }
+
 
     @PostMapping(value = "/upload-cli")
     public String handleFileUploadClient(@RequestPart(value = "file") MultipartFile file) {
-        System.out.println("file = " + file);
 
-        return client.fileUpload(new Request1());
+        client.fileUpload(file);
+
+        return file.getOriginalFilename();
     }
+    @PostMapping(value = "/upload-cli-create")
+    public String handleFileUploadClient2(@RequestPart(value = "file") MultipartFile file) {
+        DiskFileItem fileItem = (DiskFileItem) new DiskFileItemFactory().createItem("file1",
+                MediaType.TEXT_PLAIN_VALUE, true, "file1" /*file.getName()*/);
 
-    @PutMapping(value = "/upload-cli-hands")
-//    public String uploadFileWithManualClient(MultipartFile file) {
-    public String uploadFileWithManualClient(@RequestPart MultipartFile file) {
+        try (/*InputStream input = new FileInputStream(file);*/ OutputStream os = fileItem.getOutputStream()) {
+            FileInputStream input = (FileInputStream) file.getInputStream();
+            IOUtils.copy(input, os);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid file: " + e, e);
+        }
+        fileItem.setFieldName("file1");
+        MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
 
-//        UploadClient fileUploadResource = Feign.builder().encoder(new SpringFormEncoder())
-//                .target(UploadClient.class, "http://HTTP_FILE_UPLOAD_URL");
-        //threw this error:  java.lang.IllegalStateException: Method UploadClient#fileUpload(Request1) not annotated with HTTP method type (ex. GET, POST)
-        String response = client.fileUpload(new Request1());
+        client.fileUpload(multipartFile);
 
-        System.out.println("response = " + response);
-
-        return response;
+        return file.getOriginalFilename();
     }
 }

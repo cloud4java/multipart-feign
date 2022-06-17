@@ -1,6 +1,8 @@
 package com.silva.upload;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -16,11 +18,4 @@ public class ReceiveUploadController {
         return file.getOriginalFilename()+" FROM upload-file";
     }
 
-
-    @PutMapping(value = "/upload-file")
-    public String handleFileUpload(@RequestBody Request1 request) {
-        System.out.println("file = " + request ) ;
-
-        return request.getTitle() + " FROM upload-file";
-    }
 }
